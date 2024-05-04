@@ -2,7 +2,7 @@
 Bluesky API client for PHP
 
 # Version
-0.1.1
+0.1.2
 
 # Requirement
 PHP 8.1+
@@ -25,6 +25,7 @@ composer require suizumasahar01/blueky_api_client
   - [com.atproto.repo.createRecord](https://docs.bsky.app/docs/api/com-atproto-repo-create-record)
     - app.bsky.feed.post
     - app.bsky.embed.images
+    - app.bsky.richtext.facet#link
 - [Upload Image files](https://docs.bsky.app/docs/advanced-guides/posts#images-embeds)
   - [com.atproto.repo.uploadBlob](https://docs.bsky.app/docs/api/com-atproto-repo-upload-blob)
    

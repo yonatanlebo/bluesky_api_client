@@ -78,6 +78,7 @@ class Client
         ];
 
         if (! empty($filePathList)) {
+            // @see https://docs.bsky.app/docs/advanced-guides/posts#images-embeds
             $images = [];
             foreach($filePathList as $filePath) {
                 $response = $this->uploadImage($filePath);
@@ -93,6 +94,12 @@ class Client
             ];
         }
 
+        // @see https://docs.bsky.app/docs/advanced-guides/posts#mentions-and-links
+        $facets = $this->parseUrls($message);
+        if (! empty($facets)) {
+            $options['json']['record']['facets'] = $facets;
+        }
+
         $this->request('POST', $path, $options);
     }
 
@@ -104,7 +111,7 @@ class Client
      * @return array The response as an associative array
      * @throws GuzzleException
      */
-    public function uploadImage(string $filePath): array
+    private function uploadImage(string $filePath): array
     {
         $path = '/xrpc/com.atproto.repo.uploadBlob';
 
@@ -133,5 +140,40 @@ class Client
     {
         $response = $this->client->request($method, $path, $options);
         return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Parses URLs from a text and returns the facets.
+     *
+     * @param string $text The text to parse URLs from
+     *
+     * @return array The parsed URLs as facets
+     */
+    private function parseUrls(string $text): array
+    {
+        $facets = [];
+        $matchedCount = preg_match_all(
+            '(https?://[-_.!~*\'()a-zA-Z0-9;/?:@&=+$,%#]+)', $text, $matches);
+        if ($matchedCount > 0) {
+            foreach ($matches[0] as $match) {
+                $startPosition = strpos($text, $match);
+                $endPosition   = $startPosition + strlen($match);
+
+                $facets[] = [
+                    'index'    => [
+                        'byteStart' => $startPosition,
+                        'byteEnd'   => $endPosition
+                    ],
+                    'features' => [
+                        0 => [
+                            '$type' => 'app.bsky.richtext.facet#link',
+                            'uri'   => $match,
+                        ],
+                    ],
+                ];
+            }
+        }
+
+        return $facets;
     }
 }
