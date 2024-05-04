@@ -51,13 +51,14 @@ class Client
     }
 
     /**
-     * Sends a POST request to create a record.
+     * Sends a POST request to create a record with a message and optional images.
      *
-     * @param string $message The message to be posted as a record
+     * @param string $message      The message for the record
+     * @param array  $filePathList List of file paths for images (optional)
      *
      * @throws GuzzleException
      */
-    public function post(string $message): void
+    public function post(string $message, array $filePathList = []): void
     {
         $path = '/xrpc/com.atproto.repo.createRecord';
 
@@ -76,7 +77,46 @@ class Client
             ],
         ];
 
-        $responseBody = $this->request('POST', $path, $options);
+        if (! empty($filePathList)) {
+            $images = [];
+            foreach($filePathList as $filePath) {
+                $response = $this->uploadImage($filePath);
+                $images[] = [
+                    'alt'   => 'This is image.',
+                    'image' => $response['blob'],
+                ];
+            }
+
+            $options['json']['record']['embed'] = [
+                '$type'  => 'app.bsky.embed.images',
+                'images' => $images,
+            ];
+        }
+
+        $this->request('POST', $path, $options);
+    }
+
+    /**
+     * Uploads an image file.
+     *
+     * @param string $filePath The path to the image file
+     *
+     * @return array The response as an associative array
+     * @throws GuzzleException
+     */
+    public function uploadImage(string $filePath): array
+    {
+        $path = '/xrpc/com.atproto.repo.uploadBlob';
+
+        $options = [
+            'headers' => [
+                'Content-Type'  => mime_content_type($filePath),
+                'Authorization' => sprintf('Bearer %s', $this->token)
+            ],
+            'body'    => fopen($filePath, "r"),
+        ];
+
+        return $this->request('POST', $path, $options);
     }
 
     /**
