@@ -2,7 +2,7 @@
 Bluesky API client for PHP.
 
 # Version
-0.1.3
+0.1.4
 
 # Requirement
 PHP 8.1+
@@ -40,12 +40,17 @@ $client->login($user, $password);
 $message  = 'Post via Bluesky API';
 $client->post($message);
 
-// If you want to post image, please set image file paths as array in 2nd argument.
-$filePathList = [
-    __DIR__ . '/sample.png',
-    __DIR__ . '/sample.JPG',
+// (Optional) If you want to add tags, please set tags as array in 2nd argument.
+$tagList = ['tag1', 'tag2', 'tag3'];
+$client->post($message, $tagList);
+
+// (Optional) If you want to post image, please set image file paths as array in 3rd argument.
+// key is used as alt.
+$filePaths = [
+    'This is png file.' => __DIR__ . '/sample.png',
+    'This is jpg file.' => __DIR__ . '/sample.JPG',
 ];
-$client->post($message, $filePathList);
+$client->post($message, [], $filePaths);
 ```
 
 # Author

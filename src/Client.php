@@ -55,14 +55,28 @@ class Client
     /**
      * Sends a POST request to create a record with a message and optional images.
      *
-     * @param string $message      The message for the record
-     * @param array  $filePathList List of file paths for images (optional)
+     * @param string $message   The message for the record
+     * @param array  $tagList   List of tags (optional)
+     * @param array  $filePaths List of file paths for images (optional)
      *
      * @throws GuzzleException
      */
-    public function post(string $message, array $filePathList = []): void
+    public function post(string $message, array $tagList = [], array $filePaths = []): void
     {
         $path = '/xrpc/com.atproto.repo.createRecord';
+
+        // @see https://docs.bsky.app/docs/advanced-guides/posts#mentions-and-links
+        $embed = [];
+        list($linkFacets, $url) = $this->parseUrls($message);
+        if ($url !== '') {
+            $embed = $this->linkCard($url);
+        }
+
+        $hashTagFacets  = [];
+        $messageWithTag = '';
+        if (! empty($tagList)) {
+            list($hashTagFacets, $messageWithTag) = $this->addHashTag($message, $tagList);
+        }
 
         $options = [
             'headers' => [
@@ -73,29 +87,28 @@ class Client
                 'repo'       => $this->did,
                 'record'     => [
                     '$type'     => 'app.bsky.feed.post',
-                    'text'      => $message,
+                    'text'      => ($messageWithTag === '') ? $message : $messageWithTag,
                     'createdAt' => date('c'),
                 ],
             ],
         ];
 
-        // @see https://docs.bsky.app/docs/advanced-guides/posts#mentions-and-links
-        list($facets, $url) = $this->parseUrls($message);
+        $facets = array_merge($hashTagFacets, $linkFacets);
         if (! empty($facets)) {
             $options['json']['record']['facets'] = $facets;
-            $embed = $this->linkCard($url);
-            if (! empty($embed)) {
-                $options['json']['record']['embed'] = $embed;
-            }
         }
 
-        if (! empty($filePathList)) {
+        if (! empty($embed)) {
+            $options['json']['record']['embed'] = $embed;
+        }
+
+        if (! empty($filePaths)) {
             // @see https://docs.bsky.app/docs/advanced-guides/posts#images-embeds
             $images = [];
-            foreach($filePathList as $filePath) {
+            foreach($filePaths as $alt => $filePath) {
                 $response = $this->uploadImage($filePath);
                 $images[] = [
-                    'alt'   => 'This is image.',
+                    'alt'   => $alt,
                     'image' => $response['blob'],
                 ];
             }
@@ -250,4 +263,40 @@ class Client
 
         return $embed;
     }
+
+    /**
+     * Adds hashtags to a message and returns the facets and updated message.
+     *
+     * @param string $message The original message.
+     * @param array  $tagList The list of tags to add.
+     *
+     * @return array An array containing the facets and updated message.
+     */
+    private function addHashTag(string $message, array $tagList): array
+    {
+        $facets = [];
+        foreach ($tagList as $tag) {
+            $startPosition = strlen($message) + 1;
+            $endPosition   = $startPosition + strlen(sprintf('#%s', $tag));
+
+            $message = sprintf('%s #%s', $message, $tag);
+
+            $facets[] = [
+                'index'    => [
+                    'byteStart' => $startPosition,
+                    'byteEnd'   => $endPosition
+                ],
+                'features' => [
+                    0 => [
+                        '$type' => 'app.bsky.richtext.facet#tag',
+                        'tag'   => $tag,
+                    ],
+                ],
+            ];
+
+        }
+
+        return [0 => $facets, 1 => $message];
+    }
+
 }

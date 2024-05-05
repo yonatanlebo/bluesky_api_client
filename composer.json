@@ -1,8 +1,8 @@
 {
     "name": "suizumasahar01/bluesky_api_client",
     "description": "Bluesky API client for PHP.",
-    "version": "0.1.3",
-    "time": "2024-05-04",
+    "version": "0.1.4",
+    "time": "2024-05-06",
     "keywords": ["Bluesky API", "PHP", "Client"],
     "license": "MIT",
     "authors": [
