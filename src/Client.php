@@ -1,6 +1,8 @@
 <?php
 namespace suizumasahar01\BlueskyApi;
 
+use DOMDocument;
+use DOMXPath;
 use GuzzleHttp\Exception\GuzzleException;
 
 /**
@@ -77,6 +79,16 @@ class Client
             ],
         ];
 
+        // @see https://docs.bsky.app/docs/advanced-guides/posts#mentions-and-links
+        list($facets, $url) = $this->parseUrls($message);
+        if (! empty($facets)) {
+            $options['json']['record']['facets'] = $facets;
+            $embed = $this->linkCard($url);
+            if (! empty($embed)) {
+                $options['json']['record']['embed'] = $embed;
+            }
+        }
+
         if (! empty($filePathList)) {
             // @see https://docs.bsky.app/docs/advanced-guides/posts#images-embeds
             $images = [];
@@ -94,12 +106,6 @@ class Client
             ];
         }
 
-        // @see https://docs.bsky.app/docs/advanced-guides/posts#mentions-and-links
-        $facets = $this->parseUrls($message);
-        if (! empty($facets)) {
-            $options['json']['record']['facets'] = $facets;
-        }
-
         $this->request('POST', $path, $options);
     }
 
@@ -115,9 +121,16 @@ class Client
     {
         $path = '/xrpc/com.atproto.repo.uploadBlob';
 
+        if (filter_var($filePath, FILTER_VALIDATE_URL)) {
+            $headers     = get_headers($filePath, true);
+            $contentType = $headers['Content-Type'];
+        } else {
+            $contentType = mime_content_type($filePath);
+        }
+
         $options = [
             'headers' => [
-                'Content-Type'  => mime_content_type($filePath),
+                'Content-Type'  => $contentType,
                 'Authorization' => sprintf('Bearer %s', $this->token)
             ],
             'body'    => fopen($filePath, "r"),
@@ -143,15 +156,16 @@ class Client
     }
 
     /**
-     * Parses URLs from a text and returns the facets.
+     * Parses URLs from the given text and returns an array of facets and card target.
      *
-     * @param string $text The text to parse URLs from
+     * @param string $text The text from which to extract URLs
      *
-     * @return array The parsed URLs as facets
+     * @return array An array containing the facets and card target
      */
     private function parseUrls(string $text): array
     {
         $facets = [];
+        $cardTarget = '';
         $matchedCount = preg_match_all(
             '(https?://[-_.!~*\'()a-zA-Z0-9;/?:@&=+$,%#]+)', $text, $matches);
         if ($matchedCount > 0) {
@@ -171,9 +185,69 @@ class Client
                         ],
                     ],
                 ];
+
+                if ($cardTarget === '') {
+                    $cardTarget = $match;
+                }
             }
         }
 
-        return $facets;
+        return [0 => $facets, 1 => $cardTarget];
+    }
+
+    /**
+     * Fetches data from a URL and extracts meta information to create an embed object.
+     *
+     * @param string $url The URL to fetch and extract information from
+     *
+     * @return array The embed object as an associative array
+     * @throws GuzzleException
+     */
+    public function linkCard(string $url): array
+    {
+        $dom = new DOMDocument();
+        $isSuccess = @$dom->loadHTMLFile($url);
+        if (! $isSuccess) {
+            return [];
+        }
+
+        $xpath = new DOMXPath($dom);
+
+        $result = $xpath->query('//meta[@property="og:title"]/@content');
+        if ($result->length > 0) {
+            $title = $result[0]->nodeValue;
+        } else {
+            $title = $dom->getElementsByTagName('title')->item(0)->nodeValue;
+        }
+
+        $description = '';
+        $result = $xpath->query('//meta[@property="og:description"]/@content');
+        if ($result->length > 0) {
+            $description = $result[0]->nodeValue;
+        }
+
+        $thumb = [];
+        $result = $xpath->query('//meta[@property="og:image"]/@content');
+        if ($result->length > 0) {
+            $imageUrl = $result[0]->nodeValue;
+            $response = $this->uploadImage($imageUrl);
+            $thumb    = $response['blob'];
+        }
+
+        $embed = [
+            '$type'    => 'app.bsky.embed.external',
+            'external' => [
+                'uri'         => $url,
+                'title'       => $title,
+                'description' => $description,
+                'thumb'       => $thumb,
+            ],
+        ];
+
+        if (empty($thumb)) {
+            unset($embed['external']['thumb']);
+        }
+
+        return $embed;
     }
 }
