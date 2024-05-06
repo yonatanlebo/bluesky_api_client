@@ -4,7 +4,7 @@ namespace suizumasahar01\BlueskyApi;
 
 use GuzzleHttp\Exception\GuzzleException;
 use suizumasahar01\BlueskyApi\Com\Atproto\Server\CreateSession;
-use suizumasahar01\BlueskyApi\Com\Atproto\repo\CreateRecord;
+use suizumasahar01\BlueskyApi\Com\Atproto\Repo\CreateRecord;
 
 /**
  * Client for Bluesky API
