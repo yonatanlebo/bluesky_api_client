@@ -1,9 +1,6 @@
 # Description
 Bluesky API client for PHP.
 
-# Version
-0.1.4
-
 # Requirement
 PHP 8.1+
 
@@ -15,7 +12,7 @@ composer require suizumasahar01/blueky_api_client
 # Providing functions
 - Authentication
   - login
-- Post (※Link function and card function are supported.)
+- Post (※link, card and tag functions are supported.)
   - Post message
   - Post message with image
   - Post image
