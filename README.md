@@ -19,6 +19,7 @@ composer require suizumasahar01/blueky_api_client
   - Post image
 
 # Usage
+## Sample code
 ```
 <?php
 require_once __DIR__ . "/vendor/autoload.php";
@@ -47,6 +48,8 @@ $client->setTags($tags);
 $client->setImages($imageFilePaths);
 $client->post();
 ```
+## Result
+![image](https://github.com/suizumasahar01/bluesky_api_client/assets/30203831/d1a168e6-319a-4ee2-9026-327e7217ff67)
 
 # Author
 Masaharu Suizu <legendary_fine_horse@hotmail.com>
