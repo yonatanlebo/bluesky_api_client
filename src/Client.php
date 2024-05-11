@@ -38,17 +38,48 @@ class Client extends AbstractClass
     }
 
     /**
-     * Sends a POST request to create a record with a message and optional images.
+     * Set the message to be sent.
      *
-     * @param string $message   The message for the record
-     * @param array  $tagList   List of tags (optional)
-     * @param array  $filePaths List of file paths for images (optional)
+     * @param string $message The message to set
+     * @return void
+     */
+    public function setMessage(string $message): void
+    {
+        parent::$message = $message;
+    }
+
+    /**
+     * Sets the tags property.
+     *
+     * @param array $tags The array of tags to set.
+     *
+     * @return void
+     */
+    public function setTags(array $tags): void
+    {
+        parent::$tags = $tags;
+    }
+
+    /**
+     * Sets the images property.
+     *
+     * @param array $imageFilePaths The array of image file paths to set.
+     *
+     * @return void
+     */
+    public function setImages(array $imageFilePaths): void
+    {
+        parent::$imageFilePaths = $imageFilePaths;
+    }
+
+    /**
+     * Sends a POST request to create a record
      *
      * @throws GuzzleException
      */
-    public function post(string $message, array $tagList = [], array $filePaths = []): void
+    public function post(): void
     {
-        (new CreateRecord())->createRecord($message, $tagList, $filePaths);
+        (new CreateRecord())->createRecord(parent::$message, parent::$tags, parent::$imageFilePaths);
     }
 
 }

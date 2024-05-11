@@ -1,5 +1,6 @@
 # Description
-Bluesky API client for PHP.
+This is a PHP package. <br>
+This package is intended to help develop PHP applications using the Bluesky API.
 
 # Requirement
 PHP 8.1+
@@ -33,21 +34,18 @@ $user     = 'suizumasahar01.net';
 $password = '?????';
 $client->login($user, $password);
 
-// After login, you can post message from post() method.
-$message  = 'Post via Bluesky API';
-$client->post($message);
-
-// (Optional) If you want to add tags, please set tags as array in 2nd argument.
-$tagList = ['tag1', 'tag2', 'tag3'];
-$client->post($message, $tagList);
-
-// (Optional) If you want to post image, please set image file paths as array in 3rd argument.
+$message  = 'Post this message via bluesky_api_client. https://github.com/suizumasahar01/bluesky_api_client';
+$tags = ['bluesky', 'github', 'php'];
 // key is used as alt.
-$filePaths = [
-    'This is png file.' => __DIR__ . '/sample.png',
-    'This is jpg file.' => __DIR__ . '/sample.JPG',
+$imageFilePaths = [
+    'This is dog png file.' => __DIR__ . '/sample.png',
+    'This is dog jpg file.' => __DIR__ . '/sample.JPG',
 ];
-$client->post($message, [], $filePaths);
+
+$client->setMessage($message);
+$client->setTags($tags);
+$client->setImages($imageFilePaths);
+$client->post();
 ```
 
 # Author

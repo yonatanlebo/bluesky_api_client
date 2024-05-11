@@ -8,9 +8,15 @@ abstract class AbstractClass
 {
     protected static \GuzzleHttp\Client $guzzleClient;
     /** @var string $did The value of $did */
-    protected static string $did;
+    protected static string $did = '';
     /** @var string $token The token value */
-    protected static string $token;
+    protected static string $token = '';
+    /** @var string $message The message variable */
+    protected static string $message = '';
+    /** @var array $tags An array to store tags */
+    protected static array $tags = [];
+    /** @var array $imageFilePaths An array to store image file paths */
+    protected static array $imageFilePaths = [];
 
     /**
      * Sends an HTTP request and returns the response.
