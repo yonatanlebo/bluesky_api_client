@@ -19,7 +19,7 @@ class CreateRecord extends AbstractClass
      *
      * @throws GuzzleException
      */
-    public function createRecord(string $message, array $tagList = [], array $filePaths = []): void
+    public function createRecord(string $message, array $tagList = [], array $filePaths = []): array
     {
         $path = '/xrpc/com.atproto.repo.createRecord';
 
@@ -28,6 +28,11 @@ class CreateRecord extends AbstractClass
         list($linkFacets, $url) = $this->parseUrls($message);
         if ($url !== '') {
             $embed = $this->linkCard($url);
+        }
+
+        // @see https://docs.bsky.app/docs/advanced-guides/posts#quote-posts
+        if (parent::$uri !== '' && parent::$cid !== '') {
+            $embed = $this->quote(parent::$uri, parent::$cid);
         }
 
         $hashTagFacets  = [];
@@ -78,7 +83,7 @@ class CreateRecord extends AbstractClass
             ];
         }
 
-        $this->request('POST', $path, $options);
+        return $this->request('POST', $path, $options);
     }
 
 
@@ -211,5 +216,24 @@ class CreateRecord extends AbstractClass
         }
 
         return [0 => $facets, 1 => $message];
+    }
+
+    /**
+     * Creates a quote record.
+     *
+     * @param string $uri The URI of the quote
+     * @param string $cid The CID of the quote
+     *
+     * @return array The quote record
+     */
+    private function quote(string $uri, string $cid): array
+    {
+        return [
+            '$type'  => 'app.bsky.embed.record',
+            'record' => [
+                'uri' => $uri,
+                'cid' => $cid,
+            ],
+        ];
     }
 }

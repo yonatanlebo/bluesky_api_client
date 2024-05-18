@@ -17,6 +17,10 @@ abstract class AbstractClass
     protected static array $tags = [];
     /** @var array $imageFilePaths An array to store image file paths */
     protected static array $imageFilePaths = [];
+    /** @var string $uri The uri variable */
+    protected static string $uri = '';
+    /** @var string $cid The cid variable */
+    protected static string $cid = '';
 
     /**
      * Sends an HTTP request and returns the response.
